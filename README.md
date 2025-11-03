@@ -58,7 +58,7 @@ plt.legend()
 
 ## Why MLE for parameter estimation?
 
-Maximum likelihood estimation (MLE) can correctly model Poisson- or Gaussian-distributed noise, leading to more accurate and unbiased parameter estimate as compared to least-squares fitting, which is only optimal for Gaussian-distributed noise.
+Maximum likelihood estimation (MLE) can correctly model Poisson- or Gaussian-distributed noise, leading to more accurate and unbiased parameter estimates as compared to least-squares fitting, which is only optimal for Gaussian-distributed noise.
 
 ## Examples
 
