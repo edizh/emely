@@ -9,6 +9,7 @@ def mle_fit(
     y_data,
     p0=None,
     sigma=None,
+    absolute_sigma=False,
     noise_type="poisson",
     method="nelder-mead",
     bounds=None,
@@ -30,6 +31,8 @@ def mle_fit(
         Initial guess for the parameters with size n_p. Default is None.
     sigma : array_like, optional
         Uncertainties in y_data. Only used for Gaussian noise type.
+    absolute_sigma : bool, optional
+        If True, the uncertainties are absolute. If False, the uncertainties are relative. Default is False.
     noise_type : str, optional
         Noise type: "poisson" or "gaussian". Default is "poisson".
     method : str, optional
@@ -63,7 +66,9 @@ def mle_fit(
     )
 
     p_opt = result.x
-    p_cov = covariance_matrix(f, x_data, y_data, p_opt, noise_type)
+    p_cov = covariance_matrix(
+        f, x_data, y_data, p_opt, sigma, absolute_sigma, noise_type
+    )
 
     return p_opt, p_cov
 
@@ -110,7 +115,7 @@ def negative_log_likelihood(f, x_data, y_data, p, sigma, noise_type):
     return nll
 
 
-def covariance_matrix(f, x_data, y_data, p, noise_type):
+def covariance_matrix(f, x_data, y_data, p, sigma, absolute_sigma, noise_type):
     """
     Calculate the covariance matrix using the Fisher information matrix.
 
@@ -124,6 +129,10 @@ def covariance_matrix(f, x_data, y_data, p, noise_type):
         The dependent data.
     p : array_like
         Optimal parameter values.
+    sigma : array_like, optional
+        Uncertainties in y_data. Only used for Gaussian noise type.
+    absolute_sigma : bool, optional
+        If True, the uncertainties are absolute. If False, the uncertainties are relative. Default is False.
     noise_type : str
         Noise type: "poisson" or "gaussian".
 
@@ -141,8 +150,12 @@ def covariance_matrix(f, x_data, y_data, p, noise_type):
     if noise_type == "poisson":
         w = 1 / y_pred
     elif noise_type == "gaussian":
-        residuals = (n_x - n_p) / np.sum((y_data - y_pred) ** 2)
-        w = np.full_like(y_pred, residuals)
+        if absolute_sigma:
+            w = 1 / sigma**2
+        else:
+            w = (n_x - n_p) / np.sum((y_data - y_pred) ** 2)
+
+        w = np.full_like(y_pred, w)
     else:
         raise ValueError(f"Unknown noise type: {noise_type}")
 
