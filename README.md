@@ -8,7 +8,7 @@ It provides a `curve_fit`-like interface built on top of `scipy.optimize.minimiz
 ## Features
 
 - **MLE fitting** for Poisson and Gaussian noise  
-- Mirrors the function inputs and outputs of `scipy.optimize.curve_fit`  
+- `emely.mle_fit` mirrors the function inputs and outputs of `scipy.optimize.curve_fit`  
 - Automatic **covariance matrix estimation** via the Fisher information matrix  
 
 ---
@@ -63,8 +63,9 @@ Maximum likelihood estimation (MLE) can correctly model Poisson- or Gaussian-dis
 ## Examples
 
 See the provided notebooks for detailed usage and comparisons:
-- example_1.ipynb: 1D Gaussian fitting with Poisson and Gaussian noise
-- example_2.ipynb: 2D Gaussian fitting and performance benchmarking
+- **example_1.ipynb:** 1D Gaussian fitting with Poisson and Gaussian noise
+- **example_2.ipynb:** 2D Gaussian fitting and performance benchmarking
+
 These examples also compare least-squares, Gaussian MLE, and Poisson MLE approaches.
 
 ## License
