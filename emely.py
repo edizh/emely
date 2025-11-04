@@ -104,11 +104,9 @@ def negative_log_likelihood(f, x_data, y_data, p, sigma, noise_type):
         nll = -np.sum(y_data * np.log(y_pred) - y_pred)
     elif noise_type == "gaussian":
         if sigma is None:
-            nll = 0.5 * np.sum((y_data - y_pred) ** 2)
+            nll = np.sum((y_data - y_pred) ** 2)
         else:
-            nll = 0.5 * np.sum(
-                (y_data - y_pred) ** 2 / sigma**2 + np.log(2 * np.pi * sigma**2)
-            )
+            nll = np.sum((y_data - y_pred) ** 2 / sigma**2)
     else:
         raise ValueError(f"Unknown noise type: {noise_type}")
 
