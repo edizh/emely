@@ -65,6 +65,7 @@ Maximum likelihood estimation (MLE) can correctly model Poisson- or Gaussian-dis
 See the provided notebooks for detailed usage and comparisons:
 - **example_1.ipynb:** Fitting a 1D Gaussian signal with Poisson noise
 - **example_2.ipynb:** Fitting a 2D Gaussian signal with Poisson noise
+- **example_3.ipynb:** Fitting a 2D Gaussian signal with temporally changing width and Poisson noise
 
 These examples compare the accuracy of least-squares, Gaussian MLE, and Poisson MLE fits.
 
