@@ -8,8 +8,9 @@ It provides a `scipy.optimize.curve_fit`-like interface built on top of `scipy.o
 ## Features
 
 - **MLE fitting** for Poisson and Gaussian noise  
-- `emely.mle_fit` mirrors the function inputs and outputs of `scipy.optimize.curve_fit`  
+- `emely.curve_fit` provides a `scipy.optimize.curve_fit`-like interface  
 - Automatic **covariance matrix estimation** via the Fisher information matrix  
+- Object-oriented API with `BaseMLE`, `GaussianMLE`, and `PoissonMLE` classes  
 
 ---
 
@@ -36,7 +37,7 @@ Dependencies are managed via `pyproject.toml`.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from emely import mle_fit
+from emely import curve_fit
 
 
 # define the model
@@ -50,12 +51,12 @@ x_data = np.linspace(-10, 10, 1001)
 y_data = np.random.poisson(gaussian(x_data, *p))
 
 # fit using MLE for Poisson noise
-p_opt, p_cov = mle_fit(
+p_opt, p_cov = curve_fit(
     gaussian,
     x_data,
     y_data,
     p0=(50, 10, 5),
-    noise_type="poisson",
+    noise="poisson",
 )
 
 # show the fit
@@ -65,6 +66,48 @@ plt.plot(x_data, gaussian(x_data, *p_opt), label="Fit")
 plt.grid()
 plt.legend()
 ```
+
+## API
+
+The package provides both a function-based and class-based interface:
+
+### Function-based API
+
+```python
+from emely import curve_fit
+
+popt, pcov = curve_fit(f, xdata, ydata, p0=None, bounds=None, sigma=None, 
+                       absolute_sigma=False, method="nelder-mead", 
+                       noise="gaussian", **kwargs)
+```
+
+The `curve_fit` function mirrors `scipy.optimize.curve_fit` with an additional `noise` parameter:
+- `noise="gaussian"`: Assumes Gaussian (normal) noise distribution (default)
+- `noise="poisson"`: Assumes Poisson noise distribution
+
+### Class-based API
+
+For more advanced usage, you can use the MLE classes directly:
+
+```python
+from emely import GaussianMLE, PoissonMLE
+
+# Create an estimator
+estimator = PoissonMLE(model)
+
+# Fit the data
+params, params_cov = estimator.fit(x_data, y_data, params_init=p0, 
+                                  param_bounds=bounds, sigma=sigma, 
+                                  is_sigma_absolute=False, optimizer="nelder-mead")
+
+# Predict using fitted parameters
+y_pred = estimator.predict(x_new)
+```
+
+Available classes:
+- `BaseMLE`: Abstract base class for MLE estimators
+- `GaussianMLE`: MLE estimator for Gaussian noise
+- `PoissonMLE`: MLE estimator for Poisson noise
 
 ## Why MLE for parameter estimation?
 
