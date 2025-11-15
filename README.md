@@ -51,11 +51,12 @@ x_data = np.linspace(-10, 10, 1001)
 y_data = np.random.poisson(gaussian(x_data, *p))
 
 # fit using MLE for Poisson noise
+p0 = (50, 10, 5)
 p_opt, p_cov = curve_fit(
     gaussian,
     x_data,
     y_data,
-    p0=(50, 10, 5),
+    p0=p0,
     noise="poisson",
 )
 
@@ -66,48 +67,6 @@ plt.plot(x_data, gaussian(x_data, *p_opt), label="Fit")
 plt.grid()
 plt.legend()
 ```
-
-## API
-
-The package provides both a function-based and class-based interface:
-
-### Function-based API
-
-```python
-from emely import curve_fit
-
-popt, pcov = curve_fit(f, xdata, ydata, p0=None, bounds=None, sigma=None, 
-                       absolute_sigma=False, method="nelder-mead", 
-                       noise="gaussian", **kwargs)
-```
-
-The `curve_fit` function mirrors `scipy.optimize.curve_fit` with an additional `noise` parameter:
-- `noise="gaussian"`: Assumes Gaussian (normal) noise distribution (default)
-- `noise="poisson"`: Assumes Poisson noise distribution
-
-### Class-based API
-
-For more advanced usage, you can use the MLE classes directly:
-
-```python
-from emely import GaussianMLE, PoissonMLE
-
-# Create an estimator
-estimator = PoissonMLE(model)
-
-# Fit the data
-params, params_cov = estimator.fit(x_data, y_data, params_init=p0, 
-                                  param_bounds=bounds, sigma=sigma, 
-                                  is_sigma_absolute=False, optimizer="nelder-mead")
-
-# Predict using fitted parameters
-y_pred = estimator.predict(x_new)
-```
-
-Available classes:
-- `BaseMLE`: Abstract base class for MLE estimators
-- `GaussianMLE`: MLE estimator for Gaussian noise
-- `PoissonMLE`: MLE estimator for Poisson noise
 
 ## Why MLE for parameter estimation?
 
