@@ -340,7 +340,9 @@ class BaseMLE(ABC):
             x_data, y_data, params, sigma_y, is_sigma_y_absolute
         )
 
-        if np.any([p_i is None for p_i in self._params_init]):
+        is_free = [p_i is None for p_i in self._params_init]
+
+        if np.any(is_free):
             if self.verbose:
                 print("Estimating initial parameters...")
 
@@ -350,7 +352,7 @@ class BaseMLE(ABC):
                 tol=self.optimizer_kwargs["tol"],
                 polish=False,
             )
-
+            
             if self.verbose:
                 print("Initial parameters:", result.x)
                 print("Success:", result.success)
