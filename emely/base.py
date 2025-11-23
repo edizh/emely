@@ -165,7 +165,7 @@ class BaseMLE(ABC):
             sigma_y /= np.mean(sigma_y)
 
             dy_data = np.diff(y_data)
-            weight = 1.4826 * median_abs_deviation(dy_data, scale=1)
+            weight = 1.4826 * median_abs_deviation(dy_data, scale=1) / np.sqrt(2)
 
         num_params = None
 
@@ -194,7 +194,7 @@ class BaseMLE(ABC):
 
         if not self.is_semi_analytical and not is_sigma_y_absolute:
             params_init = list(params_init) + [weight]
-            param_bounds = list(param_bounds) + [(1e-2 * weight, 1e2 * weight)]
+            param_bounds = list(param_bounds) + [(1e-1 * weight, 1e1 * weight)]
 
         return (
             x_data,
@@ -352,7 +352,7 @@ class BaseMLE(ABC):
                 tol=self.optimizer_kwargs["tol"],
                 polish=False,
             )
-            
+
             if self.verbose:
                 print("Initial parameters:", result.x)
                 print("Success:", result.success)
