@@ -10,7 +10,7 @@ class BaseMLE(ABC):
     Base class for maximum likelihood estimation.
 
     This class provides common functionality for fitting models with different
-    noise distributions (Poisson, Gaussian, Laplace, etc.). Subclasses should implement the
+    noise distributions (Poisson, Normal, Laplace, etc.). Subclasses should implement the
     negative log-likelihood and the Cramér-Rao bound to compute the covariance matrix.
     """
 

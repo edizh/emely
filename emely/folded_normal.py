@@ -1,14 +1,14 @@
 import numpy as np
 from .base import BaseMLE
-from scipy.stats import norm
+from scipy.stats import foldnorm
 
 
-class GaussianMLE(BaseMLE):
+class FoldedNormalMLE(BaseMLE):
     """
-    Maximum likelihood estimation for Gaussian noise distribution.
+    Maximum likelihood estimation for folded normal noise distribution.
 
-    This class implements MLE fitting assuming the data follows a Gaussian
-    (normal) distribution.
+    This class implements MLE fitting assuming the data follows a folded normal
+    distribution.
     """
 
     @property
@@ -25,15 +25,15 @@ class GaussianMLE(BaseMLE):
         Returns
         -------
         bool
-            True, indicating semi-analytical FIM computation is supported.
+            False, indicating semi-analytical FIM computation is not supported.
         """
-        return True
+        return False
 
     def _negative_log_likelihood(
         self, x_data, y_data, params, sigma_y, is_sigma_y_absolute
     ):
         """
-        Calculate the negative log-likelihood for Gaussian noise.
+        Calculate the negative log-likelihood for folded normal noise.
 
         Parameters
         ----------
@@ -55,11 +55,13 @@ class GaussianMLE(BaseMLE):
         nll : float
             Value of the negative log-likelihood.
         """
-        y_pred = self.model(x_data, *params)
+        if is_sigma_y_absolute:
+            y_pred = self.model(x_data, *params)
+        else:
+            y_pred = self.model(x_data, *params[:-1])
+            sigma_y = params[-1] * sigma_y
 
-        nll = 0.5 * np.sum(
-            (y_data - y_pred) ** 2 / sigma_y**2 + np.log(2 * np.pi * sigma_y**2)
-        )
+        nll = -np.sum(foldnorm.logpdf(y_data, c=y_pred / sigma_y, scale=sigma_y, loc=0))
 
         return nll
 
@@ -79,7 +81,6 @@ class GaussianMLE(BaseMLE):
         ndarray
             The estimated absolute standard deviation of the noise. Shape (num_data,).
         """
-
         sigma_y = self._sigma_y
         is_sigma_y_absolute = self._is_sigma_y_absolute
         params = self.params
@@ -87,18 +88,7 @@ class GaussianMLE(BaseMLE):
         if is_sigma_y_absolute:
             return sigma_y
         else:
-            _, num_data = np.shape(x_data)
-            num_params = len(params)
-
-            y_pred = self.model(x_data, *params)
-
-            weight_squared = (
-                1
-                / (num_data - num_params)
-                * np.sum((y_data - y_pred) ** 2 / sigma_y**2)
-            )
-
-            sigma_y = np.sqrt(weight_squared) * sigma_y
+            sigma_y = params[-1] * sigma_y
             return sigma_y
 
     @property
@@ -110,9 +100,10 @@ class GaussianMLE(BaseMLE):
         -------
         ndarray
             Squared scale parameter. Shape (num_data,).
+
+        Raises
+        ------
+        NotImplementedError
+            This method is not implemented for folded normal noise.
         """
-        sigma_y = self._sigma_y
-
-        scale_squared = sigma_y**2
-
-        return scale_squared
+        raise NotImplementedError()

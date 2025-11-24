@@ -1,7 +1,7 @@
-from .gaussian import GaussianMLE
+from .normal import NormalMLE
 from .poisson import PoissonMLE
 from .laplace import LaplaceMLE
-from .folded_gaussian import FoldedGaussianMLE
+from .folded_normal import FoldedNormalMLE
 
 
 def curve_fit(
@@ -13,7 +13,7 @@ def curve_fit(
     sigma=None,
     absolute_sigma=False,
     method="nelder-mead",
-    noise="gaussian",
+    noise="normal",
     **optimizer_kwargs,
 ):
     """
@@ -45,12 +45,12 @@ def curve_fit(
     method : str, optional
         Optimization method for scipy.optimize.minimize. Default is "nelder-mead".
         This parameter takes precedence over any `method` specified in `optimizer_kwargs`.
-    noise : {"gaussian", "poisson", "laplace", "folded-gaussian"}, optional
-        Noise type for maximum likelihood estimation. Default is "gaussian".
-        - "gaussian": Assumes a Gaussian (normal) noise distribution
+    noise : {"normal", "poisson", "laplace", "folded-normal"}, optional
+        Noise type for maximum likelihood estimation. Default is "normal".
+        - "normal": Assumes a normal noise distribution
         - "poisson": Assumes a Poisson noise distribution
         - "laplace": Assumes a Laplace noise distribution
-        - "folded-gaussian": Assumes a folded Gaussian (folded normal) noise distribution
+        - "folded-normal": Assumes a folded normal noise distribution
     **optimizer_kwargs
         Additional keyword arguments passed to scipy.optimize.minimize.
         Note: The `method` parameter will override any `method` key in `optimizer_kwargs`.
@@ -72,14 +72,14 @@ def curve_fit(
     is_sigma_y_absolute = absolute_sigma
     optimizer_kwargs["method"] = method
 
-    if noise == "gaussian":
-        MLE = GaussianMLE
+    if noise == "normal":
+        MLE = NormalMLE
     elif noise == "poisson":
         MLE = PoissonMLE
     elif noise == "laplace":
         MLE = LaplaceMLE
-    elif noise == "folded-gaussian":
-        MLE = FoldedGaussianMLE
+    elif noise == "folded-normal":
+        MLE = FoldedNormalMLE
     else:
         raise ValueError(f'Invalid noise type "{noise}".')
 

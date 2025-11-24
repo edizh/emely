@@ -1,16 +1,16 @@
 # Emely
 
 **Emely** is a lightweight Python package for **maximum likelihood estimation (MLE)**–based parameter fitting.  
-It provides a `scipy.optimize.curve_fit`-like interface built on top of `scipy.optimize.minimize`, with support for **Poisson**, **Gaussian**, **Laplace**, and **Folded Gaussian** noise models.
+It provides a `scipy.optimize.curve_fit`-like interface built on top of `scipy.optimize.minimize`, with support for **Poisson**, **Normal**, **Laplace**, and **Folded Normal** noise models.
 
 ---
 
 ## Features
 
-- **Parameter estimation** using MLE for Poisson, Gaussian, Laplace, and Folded Gaussian noise 
+- **Parameter estimation** using MLE for Poisson, Normal, Laplace, and Folded Normal noise 
 - **Parameter error estimation** using the Fisher information matrix   
 - `emely.curve_fit` provides a `scipy.optimize.curve_fit`-like interface  
-- The underlying `BaseMLE` classes (`GaussianMLE`, `PoissonMLE`, `LaplaceMLE`, `FoldedGaussianMLE`) provide a modern object-oriented API
+- The underlying `BaseMLE` classes (`NormalMLE`, `PoissonMLE`, `LaplaceMLE`, `FoldedNormalMLE`) provide a modern object-oriented API
 
 ---
 
@@ -33,22 +33,29 @@ Dependencies are managed via `pyproject.toml`.
 ## Quick Start
 
 ```python
-# fit Gaussian using MLE for Poisson noise
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import poisson
 
 from emely import curve_fit
 
+# define plot style
+blue = "#648fff"
+yellow = "#ffb000"
+red = "#dc267f"
+black = "#000000"
+
+plt.style.use("seaborn-v0_8")
+plt.rcParams["figure.dpi"] = 300
 
 # define the model
 def gaussian(x, a, mu, sigma):
     return a / np.sqrt(2 * np.pi * sigma**2) * np.exp(-((x - mu) ** 2) / (2 * sigma**2))
 
-
 # create the Gaussian data with Poisson noise
 p = (100, 5, 1)
-x_data = np.linspace(-10, 10, 1001)
-y_data = np.random.poisson(gaussian(x_data, *p))
+x_data = np.linspace(0, 10, 51)
+y_data = poisson.rvs(gaussian(x_data, *p))
 
 # fit using MLE for Poisson noise
 p0 = (50, 10, 5)
@@ -57,20 +64,23 @@ p_opt, p_cov = curve_fit(
     x_data,
     y_data,
     p0=p0,
-    noise="poisson",
+    noise="poisson",  # "normal", "poisson", "laplace", "folded-normal"
 )
 
 # show the fit
-plt.plot(x_data, y_data, label="Measurement")
-plt.plot(x_data, gaussian(x_data, *p_opt), label="Fit")
+plt.figure(figsize=(6, 2))
 
-plt.grid()
+plt.scatter(x_data, y_data, label="Measurement", edgecolor=black, facecolor=blue)
+plt.plot(x_data, gaussian(x_data, *p_opt), label="Fit", color=red)
+
+plt.xlabel("x")
+plt.ylabel("y")
 plt.legend()
 ```
 
 ## Why MLE for parameter estimation?
 
-Maximum likelihood estimation (MLE) can correctly model different noise distributions, leading to more accurate and unbiased parameter estimates as compared to least-squares fitting, which is only optimal for Gaussian-distributed noise.
+Maximum likelihood estimation (MLE) can correctly model different noise distributions, leading to more accurate and unbiased parameter estimates as compared to least-squares fitting, which is only optimal for normally-distributed noise.
 
 ## Examples
 
@@ -81,7 +91,7 @@ See the provided notebooks for detailed usage and comparisons:
 - **example_4.ipynb:** Fitting 1D Gaussian signals with distinct Poisson noise to validate parameter covariances
 - **example_5.ipynb:** Fitting 2D Gaussian signals with distinct Poisson noise to validate parameter covariances
 
-These examples compare the accuracy of least-squares, Gaussian MLE, Poisson MLE, and Laplace MLE fits.
+These examples compare the accuracy of least-squares, Normal MLE, Poisson MLE, and Laplace MLE fits.
 
 ## License
 

@@ -1,6 +1,5 @@
 import numpy as np
 from .base import BaseMLE
-from scipy.stats import poisson
 from scipy.special import gammaln
 
 

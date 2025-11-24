@@ -1,15 +1,15 @@
 from .wrapper import curve_fit
 from .base import BaseMLE
-from .gaussian import GaussianMLE
+from .normal import NormalMLE
 from .poisson import PoissonMLE
 from .laplace import LaplaceMLE
-from .folded_gaussian import FoldedGaussianMLE
+from .folded_normal import FoldedNormalMLE
 
 __all__ = [
     "curve_fit",
     "BaseMLE",
-    "GaussianMLE",
+    "NormalMLE",
     "PoissonMLE",
     "LaplaceMLE",
-    "FoldedGaussianMLE",
+    "FoldedNormalMLE",
 ]
