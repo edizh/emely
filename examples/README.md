@@ -6,26 +6,17 @@ The `examples/` folder contains demonstration notebooks showcasing the use of th
 - **Purpose**: Demonstrates parameter estimation for a normalized Gaussian function with Poisson noise
 - **Model**: 1D Gaussian function
 - **Noise**: Poisson statistics
+- **Features**: Uses `curve_fit` with `noise="poisson"` for maximum likelihood estimation
 
-## Example 2: Decaying Gaussian fitting with Poisson noise
-- **Purpose**: Demonstrates parameter estimation for a normalized and decaying Gaussian function with Poisson noise
-- **Model**: 2D decaying Gaussian function (spatial and temporal dimensions)
-- **Noise**: Poisson statistics
-
-## Example 3: Decaying Gaussian with diffusion
-- **Purpose**: Demonstrates parameter estimation for a decaying Gaussian function with time-dependent width (diffusion) and Poisson noise
-- **Model**: 2D decaying Gaussian with diffusion (spatial and temporal dimensions)
-- **Noise**: Poisson statistics
-
-## Example 4: Error validation for Gaussian fitting
-- **Purpose**: Validates estimated errors against empirical errors for different Poisson noise samples using a Gaussian model
+## Example 2: Gaussian fitting with Laplace noise
+- **Purpose**: Demonstrates parameter estimation for a normalized Gaussian function with Laplace noise
 - **Model**: 1D Gaussian function
-- **Noise**: Poisson statistics
-- **Comparison**: Least-Squares, Gaussian-MLE, and Poisson-MLE estimators
+- **Noise**: Laplace statistics
+- **Features**: Uses `curve_fit` with `noise="laplace"` and parameter bounds for maximum likelihood estimation
 
-## Example 5: Error validation for decaying Gaussian with diffusion
-- **Purpose**: Validates estimated errors against empirical errors for different Poisson noise samples using a decaying Gaussian with diffusion model
-- **Model**: 2D decaying Gaussian with diffusion (spatial and temporal dimensions)
-- **Noise**: Poisson statistics
-- **Comparison**: Least-Squares, Gaussian-MLE, and Poisson-MLE estimators
+## Example 3: Dynamic Gaussian with diffusion and folded normal noise
+- **Purpose**: Demonstrates parameter estimation for a dynamic Gaussian function with time-dependent width (diffusion) and exponential decay, comparing Folded-Normal and Normal MLE estimators
+- **Model**: 2D Gaussian function with diffusion (spatial and temporal dimensions)
+- **Noise**: Folded normal statistics
+- **Features**: Uses `FoldedNormalMLE` and `NormalMLE` classes to compare estimators, includes parameter uncertainty visualization and prediction plots
 
