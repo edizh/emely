@@ -84,14 +84,12 @@ Maximum likelihood estimation (MLE) can correctly model different noise distribu
 
 ## Examples
 
-See the provided notebooks for detailed usage and comparisons:
+See the provided notebooks in the `examples/` folder for detailed usage:
 - **example_1.ipynb:** Fitting a 1D Gaussian signal with Poisson noise
-- **example_2.ipynb:** Fitting a 2D Gaussian signal with Poisson noise
-- **example_3.ipynb:** Fitting a 2D Gaussian signal with temporally changing width and Poisson noise
-- **example_4.ipynb:** Fitting 1D Gaussian signals with distinct Poisson noise to validate parameter covariances
-- **example_5.ipynb:** Fitting 2D Gaussian signals with distinct Poisson noise to validate parameter covariances
+- **example_2.ipynb:** Fitting a 1D Gaussian signal with Laplace noise
+- **example_3.ipynb:** Fitting a 2D dynamic Gaussian signal with folded normal noise, comparing Folded-Normal and Normal MLE estimators
 
-These examples compare the accuracy of least-squares, Normal MLE, Poisson MLE, and Laplace MLE fits.
+For more details, see the [examples README](examples/README.md).
 
 ## License
 

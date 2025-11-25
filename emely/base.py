@@ -476,10 +476,13 @@ class BaseMLE(ABC):
                 x_data, y_data, params, sigma_y, is_sigma_y_absolute
             )
 
+            eps = np.finfo(float).eps ** (1 / 3)
+            steps = eps * np.abs(params)
+            steps = np.maximum(steps, np.finfo(float).eps)
+
             # logpdf doesn't accept complex numbers
-            H = nd.Hessian(nll, method="central", step=np.sqrt(np.finfo(float).eps))(
-                params
-            )
+            H = nd.Hessian(nll, method="central", step=steps)(params)
+
             FIM = H
 
         return FIM
