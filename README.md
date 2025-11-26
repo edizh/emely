@@ -41,12 +41,9 @@ from emely import curve_fit
 
 # define plot style
 blue = "#648fff"
-yellow = "#ffb000"
 red = "#dc267f"
 black = "#000000"
-
 plt.style.use("seaborn-v0_8")
-plt.rcParams["figure.dpi"] = 300
 
 # define the model
 def gaussian(x, a, mu, sigma):
