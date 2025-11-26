@@ -2,7 +2,7 @@
 
 ## Features
 
-- [ ] **Add further noise models**: E.g. Rice or Rayleigh distribution.
+- [ ] **Add further noise models**: E.g. Rice distribution.
 
 - [ ] **Write tests for absolute sigma_y estimates**: Add a new test to validate the estimated absolute sigma_y
 

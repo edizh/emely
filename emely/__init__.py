@@ -4,6 +4,7 @@ from .normal import NormalMLE
 from .poisson import PoissonMLE
 from .laplace import LaplaceMLE
 from .folded_normal import FoldedNormalMLE
+from .rayleigh import RayleighMLE
 
 __all__ = [
     "curve_fit",
@@ -12,4 +13,5 @@ __all__ = [
     "PoissonMLE",
     "LaplaceMLE",
     "FoldedNormalMLE",
+    "RayleighMLE",
 ]

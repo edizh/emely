@@ -1,13 +1,12 @@
 import numpy as np
 from .base import BaseMLE
-from scipy.stats import foldnorm
 
 
-class FoldedNormalMLE(BaseMLE):
+class RayleighMLE(BaseMLE):
     """
-    Maximum likelihood estimation for folded normal noise distribution.
+    Maximum likelihood estimation for Rayleigh noise distribution.
 
-    This class implements MLE fitting assuming the data follows a folded normal
+    This class implements MLE fitting assuming the data follows a Rayleigh
     distribution.
     """
 
@@ -25,15 +24,15 @@ class FoldedNormalMLE(BaseMLE):
         Returns
         -------
         bool
-            False, indicating semi-analytical FIM computation is not supported.
+            True, indicating semi-analytical FIM computation is supported.
         """
-        return False
+        return True
 
     def _negative_log_likelihood(
         self, x_data, y_data, params, sigma_y, is_sigma_y_absolute
     ):
         """
-        Calculate the negative log-likelihood for folded normal noise.
+        Calculate the negative log-likelihood for Rayleigh noise.
 
         Parameters
         ----------
@@ -55,13 +54,11 @@ class FoldedNormalMLE(BaseMLE):
         nll : float
             Value of the negative log-likelihood.
         """
-        if is_sigma_y_absolute:
-            y_pred = self.model(x_data, *params)
-        else:
-            y_pred = self.model(x_data, *params[:-1])
-            sigma_y = params[-1] * sigma_y
+        y_pred = self.model(x_data, *params)
+        y_pred = np.clip(y_pred, 1e-12, np.inf)
+        y_data = np.clip(y_data, 1e-12, np.inf)
 
-        nll = -np.sum(foldnorm.logpdf(y_data, c=y_pred / sigma_y, scale=sigma_y, loc=0))
+        nll = np.sum(0.5 * (y_data / y_pred) ** 2 + 2 * np.log(y_pred) - np.log(y_data))
 
         return nll
 
@@ -81,15 +78,17 @@ class FoldedNormalMLE(BaseMLE):
         ndarray
             The estimated absolute standard deviation of the noise. Shape (num_data,).
         """
+
         sigma_y = self._sigma_y
         is_sigma_y_absolute = self._is_sigma_y_absolute
         params = self.params
 
-        if is_sigma_y_absolute:
-            return sigma_y
-        else:
-            sigma_y = params[-1] * sigma_y
-            return sigma_y
+        y_pred = self.model(x_data, *params)
+        y_pred = np.clip(y_pred, 1e-12, np.inf)
+
+        sigma_y = np.sqrt(2 / np.pi) * y_pred
+
+        return sigma_y
 
     @property
     def _estimate_scale_squared(self):
@@ -100,10 +99,9 @@ class FoldedNormalMLE(BaseMLE):
         -------
         ndarray
             Squared scale parameter. Shape (num_data,).
-
-        Raises
-        ------
-        NotImplementedError
-            This method is not implemented for folded normal noise.
         """
-        raise NotImplementedError()
+        sigma_y = self._sigma_y
+
+        scale_squared = sigma_y**2 / (4 - np.pi) / 2
+
+        return scale_squared

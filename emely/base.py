@@ -464,7 +464,7 @@ class BaseMLE(ABC):
         params = self.params
 
         if self.is_semi_analytical:
-            scale_squared = self._scale_squared
+            scale_squared = self._estimate_scale_squared
             S_sq_inv = np.diag(1 / scale_squared)
 
             model = lambda params: self._model(x_data, *params)
@@ -540,9 +540,9 @@ class BaseMLE(ABC):
 
     @property
     @abstractmethod
-    def _scale_squared(self):
+    def _estimate_scale_squared(self):
         """
-        Squared scale parameter of the noise distribution.
+        Estimate the squared scale parameter of the noise distribution.
 
         Returns
         -------
@@ -561,7 +561,7 @@ class BaseMLE(ABC):
             Jᵀ @ diag(1 / s^2) @ J,
 
         where J is the numerical Jacobian of the model. If False, the FIM is obtained
-        via a numerical Hessian of the negative log-likelihood requiring is_sigma_y_absolute=True.
+        via a numerical Hessian of the negative log-likelihood.
 
         Returns
         -------

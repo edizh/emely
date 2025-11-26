@@ -19,7 +19,7 @@ class LaplaceMLE(BaseMLE):
             Jᵀ @ diag(1 / s^2) @ J,
 
         where J is the numerical Jacobian of the model. If False, the FIM is obtained
-        via a numerical Hessian of the negative log-likelihood requiring is_sigma_y_absolute=True.
+        via a numerical Hessian of the negative log-likelihood.
 
         Returns
         -------
@@ -107,9 +107,9 @@ class LaplaceMLE(BaseMLE):
             return sigma_y
 
     @property
-    def _scale_squared(self):
+    def _estimate_scale_squared(self):
         """
-        Squared scale parameter of the noise distribution.
+        Estimate the squared scale parameter of the noise distribution.
 
         Returns
         -------
