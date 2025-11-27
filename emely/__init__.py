@@ -5,6 +5,7 @@ from .poisson import PoissonMLE
 from .laplace import LaplaceMLE
 from .folded_normal import FoldedNormalMLE
 from .rayleigh import RayleighMLE
+from .rice import RiceMLE
 
 __all__ = [
     "curve_fit",
@@ -14,4 +15,5 @@ __all__ = [
     "LaplaceMLE",
     "FoldedNormalMLE",
     "RayleighMLE",
+    "RiceMLE",
 ]

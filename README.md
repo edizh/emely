@@ -1,16 +1,16 @@
 # Emely
 
 **Emely** is a lightweight Python package for **maximum likelihood estimation (MLE)**–based parameter fitting.  
-It provides a `scipy.optimize.curve_fit`-like interface built on top of `scipy.optimize.minimize`, with support for **Poisson**, **Normal**, **Laplace**, **Folded Normal**, and **Rayleigh** noise models.
+It provides a `scipy.optimize.curve_fit`-like interface built on top of `scipy.optimize.minimize`, with support for **Poisson**, **Normal**, **Laplace**, **Folded Normal**, **Rayleigh**, and **Rice** noise models.
 
 ---
 
 ## Features
 
-- **Parameter estimation** using MLE for Poisson, Normal, Laplace, Folded Normal, and Rayleigh noise 
+- **Parameter estimation** using MLE for Poisson, Normal, Laplace, Folded Normal, Rayleigh, and Rice noise 
 - **Parameter error estimation** using the Fisher information matrix   
 - `emely.curve_fit` provides a `scipy.optimize.curve_fit`-like interface  
-- The underlying `BaseMLE` classes (`NormalMLE`, `PoissonMLE`, `LaplaceMLE`, `FoldedNormalMLE`, `RayleighMLE`) provide a modern object-oriented API
+- The underlying `BaseMLE` classes (`NormalMLE`, `PoissonMLE`, `LaplaceMLE`, `FoldedNormalMLE`, `RayleighMLE`, `RiceMLE`) provide a modern object-oriented API
 
 ---
 
@@ -61,7 +61,7 @@ p_opt, p_cov = curve_fit(
     x_data,
     y_data,
     p0=p0,
-    noise="poisson",  # "normal", "poisson", "laplace", "folded-normal", "rayleigh"
+    noise="poisson",  # "normal", "poisson", "laplace", "folded-normal", "rayleigh", "rice"
 )
 
 # show the fit

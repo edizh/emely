@@ -3,6 +3,7 @@ from .poisson import PoissonMLE
 from .laplace import LaplaceMLE
 from .folded_normal import FoldedNormalMLE
 from .rayleigh import RayleighMLE
+from .rice import RiceMLE
 
 
 def curve_fit(
@@ -46,13 +47,14 @@ def curve_fit(
     method : str, optional
         Optimization method for scipy.optimize.minimize. Default is "nelder-mead".
         This parameter takes precedence over any `method` specified in `optimizer_kwargs`.
-    noise : {"normal", "poisson", "laplace", "folded-normal", "rayleigh"}, optional
+    noise : {"normal", "poisson", "laplace", "folded-normal", "rayleigh", "rice"}, optional
         Noise type for maximum likelihood estimation. Default is "normal".
         - "normal": Assumes a normal noise distribution
         - "poisson": Assumes a Poisson noise distribution
         - "laplace": Assumes a Laplace noise distribution
         - "folded-normal": Assumes a folded normal noise distribution
         - "rayleigh": Assumes a Rayleigh noise distribution
+        - "rice": Assumes a Rice noise distribution
     **optimizer_kwargs
         Additional keyword arguments passed to scipy.optimize.minimize.
         Note: The `method` parameter will override any `method` key in `optimizer_kwargs`.
@@ -84,6 +86,8 @@ def curve_fit(
         MLE = FoldedNormalMLE
     elif noise == "rayleigh":
         MLE = RayleighMLE
+    elif noise == "rice":
+        MLE = RiceMLE
     else:
         raise ValueError(f'Invalid noise type "{noise}".')
 
