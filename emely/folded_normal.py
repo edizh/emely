@@ -30,7 +30,12 @@ class FoldedNormalMLE(BaseMLE):
         return False
 
     def _negative_log_likelihood(
-        self, x_data, y_data, params, sigma_y, is_sigma_y_absolute
+        self,
+        x_data,
+        y_data,
+        params,
+        sigma_y,
+        is_sigma_y_absolute,
     ):
         """
         Calculate the negative log-likelihood for folded normal noise.

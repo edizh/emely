@@ -440,7 +440,6 @@ class BaseMLE(ABC):
         deviance = 2 * self._negative_log_likelihood(
             x_data, y_data, params, sigma_y, is_sigma_y_absolute
         )
-
         return deviance
 
     def _fisher_information_matrix(self, x_data, y_data):
