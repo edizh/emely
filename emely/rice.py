@@ -38,7 +38,8 @@ class RiceMLE(BaseMLE):
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
         y_data : array_like
             The dependent data with shape (num_data,).
         params : array_like
@@ -72,7 +73,8 @@ class RiceMLE(BaseMLE):
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
         y_data : array_like
             The dependent data with shape (num_data,).
 

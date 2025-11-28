@@ -23,13 +23,19 @@ def curve_fit(
     estimation (MLE) fitting with support for different noise distributions. It wraps the
     BaseMLE classes to provide a familiar interface to the scipy.optimize.curve_fit function.
 
+    The function accepts xdata in the same format as scipy.optimize.curve_fit:
+    - For single-variable models: 1D array with shape (num_data,)
+    - For multi-variable models: 2D array with shape (num_vars, num_data)
+
     Parameters
     ----------
     f : callable
         The model function, f(x, ...). It must take the independent variable as the first
         argument and the parameters to fit as separate remaining arguments.
     xdata : array_like
-        The independent variable with shape (num_vars, num_data).
+        The independent variable. For single-variable models, can be 1D with shape (num_data,).
+        For multi-variable models, must be 2D with shape (num_vars, num_data).
+        Compatible with scipy.optimize.curve_fit format.
     ydata : array_like
         The dependent data. Shape (num_data,).
     p0 : array_like, optional

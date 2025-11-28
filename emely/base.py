@@ -10,8 +10,10 @@ class BaseMLE(ABC):
     Base class for maximum likelihood estimation.
 
     This class provides common functionality for fitting models with different
-    noise distributions (Poisson, Normal, Laplace, etc.). Subclasses should implement the
-    negative log-likelihood and the Cramér-Rao bound to compute the covariance matrix.
+    noise distributions (Poisson, Normal, Laplace, Folded Normal, Rayleigh, Rice).
+    It handles parameter estimation, covariance matrix calculation via the Fisher
+    Information Matrix, model prediction with uncertainty, and model selection
+    criteria (AIC and BIC).
     """
 
     def __init__(
@@ -159,7 +161,8 @@ class BaseMLE(ABC):
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
         y_data : array_like
             The dependent data with shape (num_data,).
         params_init : array_like, optional
@@ -178,11 +181,12 @@ class BaseMLE(ABC):
         Returns
         -------
         x_data : ndarray
-            Normalized independent variable. Shape (num_vars, num_data).
+            Independent variable (passed through as-is, no normalization performed).
+            Shape matches input: (num_data,) for 1D input or (num_vars, num_data) for 2D input.
         y_data : ndarray
             Dependent data. Shape (num_data,).
-        params_init : array_like, optional
-            Initial parameter guess. Shape (num_params,).
+        params_init : array_like or None
+            Initial parameter guess. Shape (num_params,). May be None if not provided.
         param_bounds : list or None
             Normalized parameter bounds. List of tuples, each with shape (num_params,).
         sigma_y : ndarray
@@ -259,7 +263,8 @@ class BaseMLE(ABC):
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
         y_data : array_like
             The dependent data, nominally f(x_data, *params) with shape (num_data,).
         params_init : array_like, optional
@@ -330,12 +335,14 @@ class BaseMLE(ABC):
 
     def predict(self, x_data):
         """
-        Predict the model output for the given independent variable using the optimal parameters.
+        Predict the model output for the given independent variable using the optimal parameters
+        from the most recent fit() call.
 
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
 
         Returns
         -------
@@ -343,6 +350,7 @@ class BaseMLE(ABC):
             Predicted dependent data. Shape (num_data,).
         y_cov : ndarray
             Covariance matrix of the predicted dependent data. Shape (num_data, num_data).
+            This represents the uncertainty in the predictions due to parameter uncertainty.
         """
 
         y_pred = self._model(x_data, *self.params)
@@ -373,7 +381,8 @@ class BaseMLE(ABC):
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
         y_data : array_like
             The dependent data with shape (num_data,).
 
@@ -445,7 +454,8 @@ class BaseMLE(ABC):
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
         y_data : array_like
             The dependent data with shape (num_data,).
 
@@ -482,7 +492,8 @@ class BaseMLE(ABC):
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
         y_data : array_like
             The dependent data with shape (num_data,).
 
@@ -526,7 +537,8 @@ class BaseMLE(ABC):
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
         y_data : array_like
             The dependent data with shape (num_data,).
 
@@ -555,7 +567,8 @@ class BaseMLE(ABC):
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
         y_data : array_like
             The dependent data with shape (num_data,).
 
@@ -590,7 +603,7 @@ class BaseMLE(ABC):
             steps = eps * np.abs(params)
             steps = np.maximum(steps, np.finfo(float).eps)
 
-            # logpdf doesn't accept complex numbers
+            # logpdf doesn't accept complex numbers, so use central difference method
             H = nd.Hessian(nll, method="central", step=steps)(params)
 
             FIM = H
@@ -610,7 +623,8 @@ class BaseMLE(ABC):
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
         y_data : array_like
             The dependent data with shape (num_data,).
         params : array_like
@@ -637,7 +651,8 @@ class BaseMLE(ABC):
         Parameters
         ----------
         x_data : array_like
-            The independent variable with shape (num_vars, num_data).
+            The independent variable. For single-variable models, can be 1D with shape (num_data,).
+            For multi-variable models, must be 2D with shape (num_vars, num_data).
         y_data : array_like
             The dependent data with shape (num_data,).
 
