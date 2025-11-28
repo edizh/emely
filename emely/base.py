@@ -591,7 +591,8 @@ class BaseMLE(ABC):
             steps = eps * np.abs(params)
             steps = np.maximum(steps, np.finfo(float).eps)
 
-            J = nd.Jacobian(model, method="complex", step=steps)(params)
+            # J = nd.Jacobian(model, method="complex", step=steps)(params)
+            J = nd.Jacobian(model, method="central", step=steps)(params)
 
             FIM = J.T @ S_sq_inv @ J
         else:
