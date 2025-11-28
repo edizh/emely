@@ -8,7 +8,8 @@ It provides a `scipy.optimize.curve_fit`-like interface built on top of `scipy.o
 ## Features
 
 - **Parameter estimation** using MLE for Poisson, Normal, Laplace, Folded Normal, Rayleigh, and Rice noise 
-- **Parameter error estimation** using the Fisher information matrix   
+- **Parameter error estimation** using the Fisher information matrix
+- **Model selection criteria**: Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) for comparing models
 - `emely.curve_fit` provides a `scipy.optimize.curve_fit`-like interface  
 - The underlying `BaseMLE` classes (`NormalMLE`, `PoissonMLE`, `LaplaceMLE`, `FoldedNormalMLE`, `RayleighMLE`, `RiceMLE`) provide a modern object-oriented API
 

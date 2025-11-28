@@ -97,9 +97,9 @@ class FoldedNormalMLE(BaseMLE):
             return sigma_y
 
     @property
-    def _estimate_scale_squared(self):
+    def _scale_squared(self):
         """
-        Estimate the squared scale parameter of the noise distribution.
+        The squared scale parameter of the noise distribution.
 
         Returns
         -------

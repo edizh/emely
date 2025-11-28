@@ -87,7 +87,7 @@ class LaplaceMLE(BaseMLE):
         if is_sigma_y_absolute:
             return sigma_y
         else:
-            _, num_data = np.shape(x_data)
+            num_data = np.size(y_data)
             num_params = len(params)
 
             y_pred = self.model(x_data, *params)
@@ -107,9 +107,9 @@ class LaplaceMLE(BaseMLE):
             return sigma_y
 
     @property
-    def _estimate_scale_squared(self):
+    def _scale_squared(self):
         """
-        Estimate the squared scale parameter of the noise distribution.
+        The squared scale parameter of the noise distribution.
 
         Returns
         -------

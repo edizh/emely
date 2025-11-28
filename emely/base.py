@@ -45,6 +45,8 @@ class BaseMLE(ABC):
         self._param_covs = None
         self._sigma_y = None
         self._is_sigma_y_absolute = None
+        self._akaike_info = None
+        self._bayesian_info = None
         self.verbose = verbose
 
         default_optimizer_kwargs = {
@@ -89,9 +91,48 @@ class BaseMLE(ABC):
         return self._is_sigma_y_absolute
 
     @property
-    def deviance(self):
-        """Deviance of the fit."""
-        return self._deviance
+    def akaike_info(self):
+        """
+        Akaike Information Criterion (AIC) of the fit.
+
+        The AIC measures the relative quality of a statistical model by balancing
+        model fit (negative log-likelihood) against model complexity (number of parameters).
+        It is calculated as:
+
+            aic = 2 * nll + 2 * num_params
+
+        where NLL is the negative log-likelihood.
+        A smaller AIC indicates a better model. The AIC is computed automatically
+        after calling fit().
+
+        Returns
+        -------
+        float
+            Akaike Information Criterion of the fit.
+        """
+        return self._akaike_info
+
+    @property
+    def bayesian_info(self):
+        """
+        Bayesian Information Criterion (BIC) of the fit.
+
+        The BIC measures the relative quality of a statistical model by balancing
+        model fit (negative log-likelihood) against model complexity (number of parameters).
+        It is calculated as:
+
+            bic = 2 * nll + num_params * log(num_data)
+
+        where NLL is the negative log-likelihood.
+        A smaller BIC indicates a better model. The BIC is computed automatically
+        after calling fit().
+
+        Returns
+        -------
+        float
+            Bayesian Information Criterion of the fit.
+        """
+        return self._bayesian_info
 
     @staticmethod
     def _wrap_model(model):
@@ -150,8 +191,6 @@ class BaseMLE(ABC):
             If True, sigma_y is the absolute standard deviation of the noise.
             If False, the absolute standard deviation is estimated from the data.
         """
-        x_data = np.atleast_2d(x_data)
-
         if sigma_y is None and is_sigma_y_absolute:
             raise ValueError("sigma_y must be provided if is_sigma_y_absolute=True")
 
@@ -277,7 +316,12 @@ class BaseMLE(ABC):
 
         self._param_covs = self._estimate_covariances(x_data, y_data)
 
-        self._deviance = self._estimate_deviance(
+        self._akaike_info = self._estimate_akaike_info(
+            x_data,
+            y_data,
+        )
+
+        self._bayesian_info = self._estimate_bayesian_info(
             x_data,
             y_data,
         )
@@ -304,7 +348,12 @@ class BaseMLE(ABC):
         y_pred = self._model(x_data, *self.params)
 
         model = lambda params: self._model(x_data, *params)
-        J = nd.Jacobian(model, method="complex", step=1e-15)(self.params)
+
+        eps = np.finfo(float).eps ** (1 / 3)
+        steps = eps * np.abs(self.params)
+        steps = np.maximum(steps, np.finfo(float).eps)
+
+        J = nd.Jacobian(model, method="complex", step=steps)(self.params)
 
         y_cov = J @ self.param_covs @ J.T
 
@@ -413,13 +462,22 @@ class BaseMLE(ABC):
 
         return param_covs
 
-    def _estimate_deviance(
+    def _estimate_akaike_info(
         self,
         x_data,
         y_data,
     ):
         """
-        Calculate the deviance.
+        Calculate the Akaike Information Criterion (AIC).
+
+        The AIC measures the relative quality of a statistical model by balancing
+        model fit (negative log-likelihood) against model complexity (number of parameters).
+        It is defined as:
+
+            AIC = 2 * NLL + 2 * k
+
+        where NLL is the negative log-likelihood and k is the number of parameters.
+        A smaller AIC indicates a better model.
 
         Parameters
         ----------
@@ -430,17 +488,65 @@ class BaseMLE(ABC):
 
         Returns
         -------
-        deviance : float
-            Value of the deviance.
+        aic : float
+            Value of the Akaike Information Criterion.
         """
         sigma_y = self._sigma_y
         is_sigma_y_absolute = self._is_sigma_y_absolute
         params = self.params
 
-        deviance = 2 * self._negative_log_likelihood(
-            x_data, y_data, params, sigma_y, is_sigma_y_absolute
+        num_params = len(params)
+
+        aic = (
+            2
+            * self._negative_log_likelihood(
+                x_data, y_data, params, sigma_y, is_sigma_y_absolute
+            )
+            + 2 * num_params
         )
-        return deviance
+        return aic
+
+    def _estimate_bayesian_info(
+        self,
+        x_data,
+        y_data,
+    ):
+        """
+        Calculate the Bayesian Information Criterion (BIC).
+
+        The BIC measures the relative quality of a statistical model by balancing
+        model fit (negative log-likelihood) against model complexity (number of parameters).
+        It is defined as:
+
+            bic = 2 * nll + num_params * log(num_data)
+
+        where NLL is the negative log-likelihood.
+        A smaller BIC indicates a better model.
+
+        Parameters
+        ----------
+        x_data : array_like
+            The independent variable with shape (num_vars, num_data).
+        y_data : array_like
+            The dependent data with shape (num_data,).
+
+        Returns
+        -------
+        bic : float
+            Value of the Bayesian Information Criterion.
+        """
+        sigma_y = self._sigma_y
+        is_sigma_y_absolute = self._is_sigma_y_absolute
+        params = self.params
+
+        num_data = np.size(y_data)
+        num_params = len(params)
+
+        bic = 2 * self._negative_log_likelihood(
+            x_data, y_data, params, sigma_y, is_sigma_y_absolute
+        ) + num_params * np.log(num_data)
+
+        return bic
 
     def _fisher_information_matrix(self, x_data, y_data):
         """
@@ -463,12 +569,17 @@ class BaseMLE(ABC):
         params = self.params
 
         if self.is_semi_analytical:
-            scale_squared = self._estimate_scale_squared
+            scale_squared = self._scale_squared
             S_sq_inv = np.diag(1 / scale_squared)
 
             model = lambda params: self._model(x_data, *params)
 
-            J = nd.Jacobian(model, method="complex", step=1e-15)(params)
+            eps = np.finfo(float).eps ** (1 / 3)
+            steps = eps * np.abs(params)
+            steps = np.maximum(steps, np.finfo(float).eps)
+
+            J = nd.Jacobian(model, method="complex", step=steps)(params)
+
             FIM = J.T @ S_sq_inv @ J
         else:
             nll = lambda params: self._negative_log_likelihood(
@@ -539,9 +650,9 @@ class BaseMLE(ABC):
 
     @property
     @abstractmethod
-    def _estimate_scale_squared(self):
+    def _scale_squared(self):
         """
-        Estimate the squared scale parameter of the noise distribution.
+        The squared scale parameter of the noise distribution.
 
         Returns
         -------
