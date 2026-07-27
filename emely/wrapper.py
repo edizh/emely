@@ -40,12 +40,13 @@ def curve_fit(
         The dependent data. Shape (num_data,).
     p0 : array_like, optional
         Initial guess for the parameters. Shape (num_params,). Default is None.
-    bounds : 2-tuple of array_like, optional
-        Bounds for the parameters as (lower_bounds, upper_bounds), each with shape (num_params,).
-        Use None for no bound. Default is None.
+    bounds : 2-tuple of array_like or scipy.optimize.Bounds, optional
+        Bounds for the parameters as (lower_bounds, upper_bounds). Each side is either
+        a scalar, which is broadcast to all parameters, or an array_like with shape
+        (num_params,). Use None for no bound. Default is None.
     sigma : array_like, optional
         Uncertainties (standard deviation) in ydata with shape (num_data,).
-        May be used depending on the noise distribution.
+        May be used depending on the noise distribution. The array is never modified.
     absolute_sigma : bool, optional
         If True, sigma is the absolute standard deviation of the noise.
         If False, the absolute standard deviation is estimated from the data.
@@ -71,6 +72,15 @@ def curve_fit(
         Optimal parameter values. Shape (num_params,).
     pcov : ndarray
         Estimated covariance matrix. Shape (num_params, num_params).
+        Filled with infinity if the parameters are not constrained by the data.
+
+    Raises
+    ------
+    ValueError
+        If the noise type is invalid, if the data is empty or contains NaNs or infs,
+        or if the number of parameters cannot be determined from p0 and bounds.
+    RuntimeError
+        If the optimizer did not converge.
     """
 
     model = f

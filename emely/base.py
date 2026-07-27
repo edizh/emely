@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.optimize import minimize, differential_evolution
+from scipy.optimize import minimize, differential_evolution, Bounds
 from scipy.stats import median_abs_deviation
 import numdifftools as nd
 from abc import ABC, abstractmethod
@@ -146,6 +146,90 @@ class BaseMLE(ABC):
 
         return model_wrapped
 
+    @staticmethod
+    def _standardize_param_bounds(param_bounds, num_params):
+        """
+        Standardize the parameter bounds to a list of (lower, upper) tuples.
+
+        Scalar bounds are broadcast to all parameters, `None` is replaced by the
+        corresponding infinite bound, and `scipy.optimize.Bounds` instances are
+        accepted. This mirrors the bounds handling of scipy.optimize.curve_fit.
+
+        Parameters
+        ----------
+        param_bounds : array_like or scipy.optimize.Bounds
+            Bounds for the parameters as (lower_bounds, upper_bounds). Each side is
+            either a scalar, which is broadcast to all parameters, or an array_like
+            with shape (num_params,). Use None for no bound.
+        num_params : int or None
+            Number of parameters, if already known. If None, it is inferred from the
+            bounds, which is only possible if at least one side is not a scalar.
+
+        Returns
+        -------
+        param_bounds : list or None
+            Standardized parameter bounds. List of (lower, upper) tuples with length
+            num_params. None if num_params could not be determined.
+        num_params : int or None
+            Number of parameters. None if it could not be determined.
+
+        Raises
+        ------
+        ValueError
+            If the number of bounds is not compatible with the number of parameters.
+        """
+        if isinstance(param_bounds, Bounds):
+            bound_sides = (param_bounds.lb, param_bounds.ub)
+        else:
+            bound_sides = tuple(param_bounds)
+
+        if len(bound_sides) != 2:
+            raise ValueError(
+                "Parameter bounds must be given as (lower_bounds, upper_bounds)."
+            )
+
+        no_bound_values = (-np.inf, np.inf)
+        standardized_sides = []
+
+        for bounds, no_bound_value in zip(bound_sides, no_bound_values):
+            if bounds is None:
+                bounds = no_bound_value
+
+            if np.ndim(bounds) == 0:
+                bounds = np.asarray(bounds, dtype=float)
+            else:
+                bounds = np.asarray(
+                    [no_bound_value if b is None else b for b in bounds], dtype=float
+                )
+
+            standardized_sides.append(bounds)
+
+        lower_bounds, upper_bounds = standardized_sides
+
+        if num_params is None:
+            if lower_bounds.ndim > 0:
+                num_params = lower_bounds.size
+            elif upper_bounds.ndim > 0:
+                num_params = upper_bounds.size
+
+        if num_params is None:
+            return None, None
+
+        if lower_bounds.ndim == 0:
+            lower_bounds = np.resize(lower_bounds, num_params)
+
+        if upper_bounds.ndim == 0:
+            upper_bounds = np.resize(upper_bounds, num_params)
+
+        if lower_bounds.size != num_params or upper_bounds.size != num_params:
+            raise ValueError(
+                "The number of bounds is not compatible with the number of parameters."
+            )
+
+        param_bounds = list(zip(lower_bounds, upper_bounds))
+
+        return param_bounds, num_params
+
     def _check_fit_args(
         self,
         x_data,
@@ -168,8 +252,9 @@ class BaseMLE(ABC):
         params_init : array_like, optional
             Initial guess for the parameters. Shape (num_params,). Default is None.
         param_bounds : array_like, optional
-            Bounds for the parameters as (lower_bounds, upper_bounds), each with shape (num_params,).
-            Use None for no bound. Default is None.
+            Bounds for the parameters as (lower_bounds, upper_bounds). Each side is
+            either a scalar, which is broadcast to all parameters, or an array_like
+            with shape (num_params,). Use None for no bound. Default is None.
         sigma_y : array_like, optional
             Uncertainties (standard deviation) in y_data with shape (num_data,).
             May be used depending on the noise distribution.
@@ -181,20 +266,39 @@ class BaseMLE(ABC):
         Returns
         -------
         x_data : ndarray
-            Independent variable (passed through as-is, no normalization performed).
-            Shape matches input: (num_data,) for 1D input or (num_vars, num_data) for 2D input.
+            Independent variable, converted to a float array. Shape matches input:
+            (num_data,) for 1D input or (num_vars, num_data) for 2D input. Inputs that
+            are not array_like are passed through as-is, since they are handed straight
+            to the model.
         y_data : ndarray
             Dependent data. Shape (num_data,).
         params_init : array_like or None
             Initial parameter guess. Shape (num_params,). May be None if not provided.
         param_bounds : list or None
-            Normalized parameter bounds. List of tuples, each with shape (num_params,).
+            Standardized parameter bounds. List of (lower, upper) tuples with length num_params.
         sigma_y : ndarray
-            Uncertainties (standard deviation) in y_data with shape (num_data,).
+            Uncertainties (standard deviation) in y_data with shape (num_data,). Always a
+            fresh array, so the array provided by the caller is never modified.
         is_sigma_y_absolute : bool
             If True, sigma_y is the absolute standard deviation of the noise.
             If False, the absolute standard deviation is estimated from the data.
+
+        Raises
+        ------
+        ValueError
+            If the data is empty or contains NaNs or infs, if sigma_y is missing while
+            is_sigma_y_absolute is True, or if the number of parameters cannot be
+            determined from params_init and param_bounds.
         """
+        y_data = np.asarray_chkfinite(y_data, dtype=float)
+
+        if isinstance(x_data, (list, tuple, np.ndarray)):
+            # x_data is handed straight to the model, so other types are passed through
+            x_data = np.asarray_chkfinite(x_data, dtype=float)
+
+        if np.size(y_data) == 0:
+            raise ValueError("y_data must not be empty.")
+
         if sigma_y is None and is_sigma_y_absolute:
             raise ValueError("sigma_y must be provided if is_sigma_y_absolute=True")
 
@@ -203,6 +307,8 @@ class BaseMLE(ABC):
 
         if np.ndim(sigma_y) == 0:
             sigma_y = np.full_like(y_data, sigma_y, dtype=float)
+
+        sigma_y = np.array(sigma_y, dtype=float)
 
         if not is_sigma_y_absolute:
             sigma_y /= np.mean(sigma_y)
@@ -216,9 +322,9 @@ class BaseMLE(ABC):
             num_params = len(params_init)
 
         if param_bounds is not None:
-            param_bounds = list(zip(*param_bounds))
-            if num_params is None:
-                num_params = len(param_bounds)
+            param_bounds, num_params = self._standardize_param_bounds(
+                param_bounds, num_params
+            )
 
         if num_params is None:
             raise ValueError(
@@ -271,11 +377,13 @@ class BaseMLE(ABC):
             Initial guess for the parameters. Shape (num_params,). Default is None.
             If None, parameters are initialized using stochastic search (differential_evolution).
         param_bounds : array_like, optional
-            Bounds for the parameters as (lower_bounds, upper_bounds), each with shape (num_params,).
-            Use None for no bound. Default is None.
+            Bounds for the parameters as (lower_bounds, upper_bounds). Each side is
+            either a scalar, which is broadcast to all parameters, or an array_like
+            with shape (num_params,). Use None for no bound. Default is None.
         sigma_y : array_like, optional
             Uncertainties (standard deviation) in y_data with shape (num_data,).
-            May be used depending on the noise distribution.
+            May be used depending on the noise distribution. The array is never
+            modified.
         is_sigma_y_absolute : bool, optional
             If True, sigma_y is the absolute standard deviation of the noise.
             If False, the absolute standard deviation is estimated from the data.
@@ -287,6 +395,16 @@ class BaseMLE(ABC):
             Optimal parameter values. Shape (num_params,).
         param_covs : ndarray
             Estimated covariance matrix. Shape (num_params, num_params).
+            Filled with infinity if the parameters are not constrained by the data.
+
+        Raises
+        ------
+        ValueError
+            If the data is empty or contains NaNs or infs, if sigma_y is missing while
+            is_sigma_y_absolute is True, or if the number of parameters cannot be
+            determined from params_init and param_bounds.
+        RuntimeError
+            If the optimizer did not converge.
         """
         (
             x_data,
@@ -390,6 +508,15 @@ class BaseMLE(ABC):
         -------
         params : ndarray
             Optimal parameter values. Shape (num_params,).
+
+        Raises
+        ------
+        RuntimeError
+            If the optimizer did not converge. The optimizer is derivative-free by
+            default, which is robust but requires more iterations as the number of
+            parameters grows. Increasing the iteration budget, e.g. with
+            options={"maxiter": ..., "maxfev": ...}, or selecting a different method
+            usually resolves this.
         """
         sigma_y = self._sigma_y
         is_sigma_y_absolute = self._is_sigma_y_absolute
@@ -439,6 +566,9 @@ class BaseMLE(ABC):
             print("Message:", result.message)
             print("--------------------------------")
 
+        if not result.success:
+            raise RuntimeError(f"Optimal parameters not found: {result.message}")
+
         params = result.x
 
         return params
@@ -450,6 +580,11 @@ class BaseMLE(ABC):
     ):
         """
         Calculate the covariance matrix using the Cramér-Rao bound.
+
+        If the Fisher information matrix is singular, the parameters are not
+        constrained by the data and the covariance matrix is filled with infinity
+        rather than being pseudo-inverted, since a pseudo-inverse would report a
+        vanishing uncertainty for an unconstrained parameter.
 
         Parameters
         ----------
@@ -463,12 +598,22 @@ class BaseMLE(ABC):
         -------
         param_covs : ndarray
             Estimated covariance matrix. Shape (num_params, num_params).
+            Filled with infinity if the Fisher information matrix is singular.
         """
         FIM = self._fisher_information_matrix(x_data, y_data)
-        try:
+
+        num_params = len(self.params)
+
+        param_covs = np.full((num_params, num_params), np.inf)
+
+        is_invertible = (
+            np.shape(FIM) == (num_params, num_params)
+            and np.all(np.isfinite(FIM))
+            and np.linalg.matrix_rank(FIM) == num_params
+        )
+
+        if is_invertible:
             param_covs = np.linalg.inv(FIM)
-        except np.linalg.LinAlgError:
-            param_covs = np.linalg.pinv(FIM)
 
         return param_covs
 
