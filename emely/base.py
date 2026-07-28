@@ -36,7 +36,10 @@ class BaseMLE(ABC):
             - method : str, default "nelder-mead"
                 Optimization method to use.
             - tol : float, default 1e-9
-                Tolerance for termination.
+                Tolerance for termination. Its meaning depends on the method:
+                scipy.optimize.minimize maps it to the absolute xatol and fatol for
+                "nelder-mead", but to a relative ftol for e.g. "l-bfgs-b". A large
+                negative log-likelihood can therefore put fatol out of reach.
             Any additional keyword arguments are also passed through to
             scipy.optimize.minimize. User-provided values override the defaults.
         """
@@ -272,10 +275,13 @@ class BaseMLE(ABC):
             to the model.
         y_data : ndarray
             Dependent data. Shape (num_data,).
-        params_init : array_like or None
-            Initial parameter guess. Shape (num_params,). May be None if not provided.
-        param_bounds : list or None
-            Standardized parameter bounds. List of (lower, upper) tuples with length num_params.
+        params_init : list
+            Initial parameter guess, one entry per fitted parameter, including the
+            appended scale parameter where one is fitted. Entries are None where no
+            guess was provided.
+        param_bounds : list
+            Standardized parameter bounds. One (lower, upper) tuple per entry of
+            params_init.
         sigma_y : ndarray
             Uncertainties (standard deviation) in y_data with shape (num_data,). Always a
             fresh array, so the array provided by the caller is never modified.
@@ -316,6 +322,12 @@ class BaseMLE(ABC):
             dy_data = np.diff(y_data)
             weight = 1.4826 * median_abs_deviation(dy_data, scale=1) / np.sqrt(2)
 
+            # scaling sigma_y by the noise scale conditions the objective without
+            # moving its minimum, and is skipped when the scale cannot be estimated,
+            # e.g. for constant or heavily quantized y_data
+            if weight > 0:
+                sigma_y *= weight
+
         num_params = None
 
         if params_init is not None:
@@ -342,8 +354,8 @@ class BaseMLE(ABC):
             param_bounds = [(None, None)] * num_params
 
         if not self.is_semi_analytical and not is_sigma_y_absolute:
-            params_init = list(params_init) + [weight]
-            param_bounds = list(param_bounds) + [(1e-1 * weight, 1e1 * weight)]
+            params_init = list(params_init) + [1.0]
+            param_bounds = list(param_bounds) + [(1e-1, 1e1)]
 
         return (
             x_data,
@@ -512,11 +524,9 @@ class BaseMLE(ABC):
         Raises
         ------
         RuntimeError
-            If the optimizer did not converge. The optimizer is derivative-free by
-            default, which is robust but requires more iterations as the number of
-            parameters grows. Increasing the iteration budget, e.g. with
-            options={"maxiter": ..., "maxfev": ...}, or selecting a different method
-            usually resolves this.
+            If the optimizer did not converge, either because the iteration budget was
+            too small, which options={"maxiter": ..., "maxfev": ...} resolves, or
+            because tol is out of reach for the scale of the negative log-likelihood.
         """
         sigma_y = self._sigma_y
         is_sigma_y_absolute = self._is_sigma_y_absolute
